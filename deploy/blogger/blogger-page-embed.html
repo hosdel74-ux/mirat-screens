@@ -1,0 +1,26 @@
+<!--
+  تضمين أداة مِرآة الشاشات داخل صفحة ثابتة في بلوجر
+  الخطوات:
+  1) ارفع المشروع على Cloudflare Pages (مجلد dist + مجلد functions).
+  2) استبدل https://YOUR-APP.pages.dev برابط مشروعك الفعلي على Cloudflare Pages.
+  3) في لوحة بلوجر: الصفحات -> صفحة جديدة -> عرض HTML -> الصق هذا الكود.
+-->
+<div id="mirror-embed-wrap" style="width:100%; margin:0 auto; padding:0;">
+  <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+    <a
+      href="https://YOUR-APP.pages.dev"
+      target="_blank"
+      rel="noopener noreferrer"
+      style="display:inline-flex; align-items:center; gap:6px; padding:8px 14px; background:#2563eb; color:#ffffff; text-decoration:none; border-radius:8px; font-family:inherit; font-size:13px; font-weight:600;"
+    >
+      فتح الأداة في نافذة كاملة
+    </a>
+  </div>
+  <iframe
+    src="https://YOUR-APP.pages.dev"
+    title="مِرآة الشاشات — معاينة المواقع على مختلف الأجهزة"
+    loading="lazy"
+    allowfullscreen
+    style="width:100%; height:85vh; min-height:680px; border:1px solid #e2e8f0; border-radius:12px; display:block; background:#f4f5f7;"
+  ></iframe>
+</div>

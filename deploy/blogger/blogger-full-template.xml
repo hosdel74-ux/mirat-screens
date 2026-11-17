@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html>
+<html b:css='false' b:defaultwidgetversion='2' b:layoutsVersion='3' dir='rtl' lang='ar' xmlns='http://www.w3.org/1999/xhtml' xmlns:b='http://www.google.com/2005/gml/b' xmlns:data='http://www.google.com/2005/gml/data' xmlns:expr='http://www.google.com/2005/gml/expr'>
+<head>
+  <meta charset='UTF-8'/>
+  <meta content='width=device-width, initial-scale=1.0' name='viewport'/>
+  <title><data:blog.pageTitle/></title>
+  <link href='https://fonts.googleapis.com' rel='preconnect'/>
+  <link crossorigin='' href='https://fonts.gstatic.com' rel='preconnect'/>
+  <link href='https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap' rel='stylesheet'/>
+
+  <!-- استبدل YOUR-APP.pages.dev برابط مشروعك على Cloudflare Pages -->
+  <link href='https://YOUR-APP.pages.dev/assets/app.css' rel='stylesheet'/>
+
+  <b:skin><![CDATA[
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+    }
+    #blogger-required-section {
+      display: none !important;
+    }
+  ]]></b:skin>
+</head>
+<body>
+  <div id='root'></div>
+
+  <!-- قسم مطلوب شكلياً لقبول حفظ قالب بلوجر -->
+  <b:section id='blogger-required-section' showaddelement='no'/>
+
+  <!-- توجيه طلبات الوكيل الذكي إلى Cloudflare Pages Function -->
+  <script type='text/javascript'>
+    window.__MIRROR_API_BASE__ = 'https://YOUR-APP.pages.dev';
+  </script>
+  <script crossorigin='' src='https://YOUR-APP.pages.dev/assets/app.js' type='module'></script>
+</body>
+</html>

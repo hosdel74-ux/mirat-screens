@@ -1,0 +1,6 @@
+{
+  "name": "مِرآة الشاشات — معاينة المواقع الحية",
+  "description": "منصة احترافية لمعاينة المواقع والتصاميم على مختلف الأجهزة والشاشات مع دعم العرض الحي ومحرر الكود المتزامن.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
