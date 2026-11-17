@@ -19,7 +19,12 @@ function normalizeUrlInput(raw: string): string {
 export default function App() {
   const [devices, setDevices] = useState<DevicePreset[]>(DEFAULT_DEVICES);
   const [previewSource, setPreviewSource] = useState<PreviewSource>(PreviewSource.Demo);
-  const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Multi);
+  const [viewMode, setViewMode] = useState<ViewMode>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+      return ViewMode.Focus;
+    }
+    return ViewMode.Multi;
+  });
   const [focusedDeviceId, setFocusedDeviceId] = useState<string>('iphone-16-pro');
 
   const [urlInput, setUrlInput] = useState<string>('https://ar.wikipedia.org');
@@ -68,20 +73,36 @@ export default function App() {
     document.documentElement.classList.toggle('dark', isDark);
   }, [isDark]);
 
-  // Measure canvas container
+  // Measure canvas container with hysteresis threshold to prevent resize jitter loop
   useEffect(() => {
     const el = canvasRef.current;
     if (!el) return;
+
+    let frameId: number | null = null;
     const observer = new ResizeObserver((entries) => {
-      for (const entry of entries) {
-        setCanvasSize({
-          width: entry.contentRect.width,
-          height: entry.contentRect.height,
+      const entry = entries[0];
+      if (!entry) return;
+
+      const newWidth = Math.round(entry.contentRect.width);
+      const newHeight = Math.round(entry.contentRect.height);
+
+      if (frameId) cancelAnimationFrame(frameId);
+      frameId = requestAnimationFrame(() => {
+        setCanvasSize((prev) => {
+          // Ignore small subpixel or scrollbar fluctuations (under 24px) to stop infinite vibration
+          if (Math.abs(prev.width - newWidth) < 24 && Math.abs(prev.height - newHeight) < 24) {
+            return prev;
+          }
+          return { width: newWidth, height: newHeight };
         });
-      }
+      });
     });
+
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      if (frameId) cancelAnimationFrame(frameId);
+      observer.disconnect();
+    };
   }, []);
 
   // Debounce Live Code edits (150ms) for smooth instant preview
@@ -213,13 +234,13 @@ ${bridgeScript}
       if (viewMode === ViewMode.Focus) {
         const fitH = availH / effH;
         const fitW = availW / effW;
-        return Number(Math.min(1, fitH, fitW).toFixed(3));
+        return Number(Math.min(1, fitH, fitW).toFixed(2));
       }
 
       // Multi-device canvas auto-scale: keep height balanced and readable side-by-side
       const targetHeightScale = availH / effH;
       const capByCategory = effW >= 1200 ? 0.56 : effW >= 700 ? 0.62 : 0.72;
-      return Number(Math.max(0.28, Math.min(capByCategory, targetHeightScale)).toFixed(3));
+      return Number(Math.max(0.28, Math.min(capByCategory, targetHeightScale)).toFixed(2));
     },
     [zoomMode, canvasSize, viewMode]
   );
@@ -352,7 +373,7 @@ ${bridgeScript}
         {/* Device Preview Canvas */}
         <main
           ref={canvasRef}
-          className="flex-1 studio-canvas-bg overflow-auto studio-scroll p-6 lg:p-8 flex items-start"
+          className="flex-1 studio-canvas-bg overflow-x-auto overflow-y-auto studio-scroll p-4 sm:p-6 lg:p-8"
         >
           {viewMode === ViewMode.Focus && focusedDevice ? (
             <div className="w-full flex flex-col items-center justify-start gap-4">
@@ -393,7 +414,7 @@ ${bridgeScript}
               />
             </div>
           ) : visibleDevices.length > 0 ? (
-            <div className="flex items-start gap-8 mx-auto pb-4">
+            <div className="w-max min-w-full flex items-start gap-8 pb-6">
               {visibleDevices.map((device) => (
                 <DeviceFrame
                   key={device.id}
