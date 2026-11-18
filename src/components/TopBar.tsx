@@ -26,7 +26,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   const isFocusActive = !isCodeActive && viewMode === ViewMode.Focus;
 
   return (
-    <header className="h-14 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 lg:px-6 flex items-center justify-between gap-8 shrink-0">
+    <header className="h-14 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 px-4 lg:px-6 flex items-center justify-between gap-4 lg:gap-8 shrink-0">
       {/* Zone 1: Single-line Brand Wordmark */}
       <a
         href="/"
@@ -40,7 +40,7 @@ export const TopBar: React.FC<TopBarProps> = ({
       </a>
 
       {/* Zone 2: Concise single-line navigation links */}
-      <nav className="hidden md:flex items-center gap-6 text-sm font-medium">
+      <nav className="hidden md:flex items-center gap-4 lg:gap-6 text-xs lg:text-sm font-medium">
         <button
           type="button"
           onClick={onSelectMulti}
