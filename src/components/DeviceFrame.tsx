@@ -109,28 +109,32 @@ export const DeviceFrame: React.FC<DeviceFrameProps> = ({
     <div className="flex flex-col items-start shrink-0">
       {/* Device Metadata & Per-Screen Controls (Zero-Pill Rule: clean unboxed text with separators) */}
       <div
-        className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 mb-2.5 w-full min-w-0"
+        className="flex items-center justify-between gap-2 mb-2.5 h-7 min-w-0"
         style={{ width: Math.max(scaledWidth + bezelPaddingX * 2, 260) }}
       >
-        <div className="flex items-center gap-2 min-w-0">
-          <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 whitespace-nowrap">
+        <div className="flex items-center gap-1.5 min-w-0">
+          <span className="text-xs font-semibold text-slate-900 dark:text-slate-100 truncate">
             {device.name}
           </span>
-          <span className="text-slate-300 dark:text-slate-700" aria-hidden="true">
+          <span className="text-slate-300 dark:text-slate-700 shrink-0" aria-hidden="true">
             ·
           </span>
-          <span dir="ltr" className="text-[11px] font-mono text-slate-500 dark:text-slate-400 whitespace-nowrap">
-            {effectiveWidth} × {effectiveHeight}
+          <span dir="ltr" className="text-[11px] font-mono text-slate-500 dark:text-slate-400 whitespace-nowrap shrink-0">
+            {effectiveWidth}×{effectiveHeight}
           </span>
-          <span className="text-slate-300 dark:text-slate-700 hidden sm:inline" aria-hidden="true">
-            ·
-          </span>
-          <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 hidden sm:inline whitespace-nowrap">
-            {breakpoint} · {device.dpr}x
-          </span>
+          {scaledWidth >= 360 && (
+            <>
+              <span className="text-slate-300 dark:text-slate-700 shrink-0" aria-hidden="true">
+                ·
+              </span>
+              <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400 whitespace-nowrap shrink-0">
+                {breakpoint} · {device.dpr}x
+              </span>
+            </>
+          )}
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-0.5 shrink-0">
           <button
             type="button"
             onClick={() => onRotate(device.id)}
