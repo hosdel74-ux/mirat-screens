@@ -19,13 +19,19 @@ function normalizeUrlInput(raw: string): string {
 export default function App() {
   const [devices, setDevices] = useState<DevicePreset[]>(DEFAULT_DEVICES);
   const [previewSource, setPreviewSource] = useState<PreviewSource>(PreviewSource.Demo);
+  const hasManualViewModeRef = useRef<boolean>(false);
   const [viewMode, setViewMode] = useState<ViewMode>(() => {
-    if (typeof window !== 'undefined' && window.innerWidth < 768) {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
       return ViewMode.Focus;
     }
     return ViewMode.Multi;
   });
   const [focusedDeviceId, setFocusedDeviceId] = useState<string>('iphone-16-pro');
+
+  const handleUserChangeViewMode = useCallback((mode: ViewMode) => {
+    hasManualViewModeRef.current = true;
+    setViewMode(mode);
+  }, []);
 
   const [urlInput, setUrlInput] = useState<string>('https://ar.wikipedia.org');
   const [activeUrl, setActiveUrl] = useState<string>('https://ar.wikipedia.org');
@@ -55,8 +61,8 @@ export default function App() {
   // Canvas measurement for smart Auto-Fit scaling
   const canvasRef = useRef<HTMLDivElement | null>(null);
   const [canvasSize, setCanvasSize] = useState<{ width: number; height: number }>({
-    width: 1200,
-    height: 700,
+    width: typeof window !== 'undefined' ? window.innerWidth : 1200,
+    height: typeof window !== 'undefined' ? window.innerHeight - 140 : 700,
   });
 
   const iframeRefs = useRef<Map<string, HTMLIFrameElement>>(new Map());
@@ -73,7 +79,7 @@ export default function App() {
     document.documentElement.classList.toggle('dark', isDark);
   }, [isDark]);
 
-  // Measure canvas container with hysteresis threshold to prevent resize jitter loop
+  // Measure canvas container with hysteresis threshold and adapt viewMode for small/medium screens
   useEffect(() => {
     const el = canvasRef.current;
     if (!el) return;
@@ -88,8 +94,10 @@ export default function App() {
 
       if (frameId) cancelAnimationFrame(frameId);
       frameId = requestAnimationFrame(() => {
+        if (!hasManualViewModeRef.current && typeof window !== 'undefined') {
+          setViewMode(window.innerWidth < 1024 ? ViewMode.Focus : ViewMode.Multi);
+        }
         setCanvasSize((prev) => {
-          // Ignore small subpixel or scrollbar fluctuations (under 24px) to stop infinite vibration
           if (Math.abs(prev.width - newWidth) < 24 && Math.abs(prev.height - newHeight) < 24) {
             return prev;
           }
@@ -135,6 +143,7 @@ export default function App() {
         setPreviewSource((prev) => (prev === PreviewSource.Code ? PreviewSource.Demo : PreviewSource.Code));
       } else if (key === 'm') {
         e.preventDefault();
+        hasManualViewModeRef.current = true;
         setViewMode((prev) => (prev === ViewMode.Multi ? ViewMode.Focus : ViewMode.Multi));
       }
     };
@@ -229,20 +238,35 @@ ${bridgeScript}
       const effW = device.rotated ? device.height : device.width;
       const effH = device.rotated ? device.width : device.height;
       const availH = Math.max(320, canvasSize.height - 120);
-      const availW = Math.max(300, canvasSize.width - 72);
+      const availW = Math.max(280, canvasSize.width - 64);
 
       if (viewMode === ViewMode.Focus) {
         const fitH = availH / effH;
         const fitW = availW / effW;
-        return Number(Math.min(1, fitH, fitW).toFixed(2));
+        return Number(Math.max(0.2, Math.min(1, fitH, fitW)).toFixed(2));
       }
 
-      // Multi-device canvas auto-scale: keep height balanced and readable side-by-side
+      // Multi-device canvas auto-scale: fit height AND fit total horizontal width when reasonable
       const targetHeightScale = availH / effH;
       const capByCategory = effW >= 1200 ? 0.56 : effW >= 700 ? 0.62 : 0.72;
-      return Number(Math.max(0.28, Math.min(capByCategory, targetHeightScale)).toFixed(2));
+      const baseScale = Math.min(capByCategory, targetHeightScale);
+
+      const totalNominalWidth = visibleDevices.reduce((acc, d) => {
+        const w = d.rotated ? d.height : d.width;
+        const h = d.rotated ? d.width : d.height;
+        const cap = w >= 1200 ? 0.56 : w >= 700 ? 0.62 : 0.72;
+        const s = Math.min(cap, availH / h);
+        return acc + w * s + 28;
+      }, 0);
+      const gapTotal = Math.max(0, visibleDevices.length - 1) * 32;
+      const widthCorrection =
+        totalNominalWidth + gapTotal > availW && visibleDevices.length <= 4
+          ? availW / (totalNominalWidth + gapTotal)
+          : 1;
+
+      return Number(Math.max(0.28, Math.min(1, baseScale * Math.min(1, widthCorrection))).toFixed(2));
     },
-    [zoomMode, canvasSize, viewMode]
+    [zoomMode, canvasSize, viewMode, visibleDevices]
   );
 
   const handleSubmitUrl = (explicitUrl?: string) => {
@@ -321,11 +345,11 @@ ${bridgeScript}
         previewSource={previewSource}
         onSelectMulti={() => {
           if (previewSource === PreviewSource.Code) setPreviewSource(PreviewSource.Demo);
-          setViewMode(ViewMode.Multi);
+          handleUserChangeViewMode(ViewMode.Multi);
         }}
         onSelectFocus={() => {
           if (previewSource === PreviewSource.Code) setPreviewSource(PreviewSource.Demo);
-          setViewMode(ViewMode.Focus);
+          handleUserChangeViewMode(ViewMode.Focus);
         }}
         onSelectLiveCode={() => setPreviewSource(PreviewSource.Code)}
         onOpenShortcuts={() => setShortcutsModalOpen(true)}
@@ -344,7 +368,7 @@ ${bridgeScript}
         onChangeAutoRefreshSec={setAutoRefreshSec}
         onReloadAll={() => setReloadVersion((v) => v + 1)}
         viewMode={viewMode}
-        onChangeViewMode={setViewMode}
+        onChangeViewMode={handleUserChangeViewMode}
         syncScroll={syncScroll}
         onToggleSyncScroll={() => setSyncScroll((s) => !s)}
         showBezels={showBezels}
@@ -414,7 +438,7 @@ ${bridgeScript}
               />
             </div>
           ) : visibleDevices.length > 0 ? (
-            <div className="w-max min-w-full flex items-start gap-8 pb-6">
+            <div className="w-max min-w-full flex items-start justify-center gap-6 lg:gap-8 pb-6">
               {visibleDevices.map((device) => (
                 <DeviceFrame
                   key={device.id}
